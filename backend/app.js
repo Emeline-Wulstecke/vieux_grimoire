@@ -3,7 +3,7 @@ const app = express();
 require('dotenv').config(); 
 
 const mongoose = require("mongoose");
-const path = require('path');
+
 
 // Connection à la base de données MongoDB
 const dbURI = `mongodb+srv://${process.env.DB_ID}:${process.env.DB_PASS}@${process.env.DB_NAME}.mongodb.net/?retryWrites=true&w=majority`;
