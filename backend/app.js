@@ -6,7 +6,8 @@ require('dotenv').config();
 const mongoose = require("mongoose");
 
 // Connexion à la base de données MongoDB
-const dbURI = `mongodb+srv://${process.env.DB_ID}:${process.env.DB_PASS}@${process.env.DB_NAME}.mongodb.net/?retryWrites=true&w=majority`;
+const dbURI = `mongodb+srv://${process.env.DB_ID}:${process.env.DB_PASS}@cluster0.y9qc2qd.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
+
 
 mongoose
   .connect(dbURI)

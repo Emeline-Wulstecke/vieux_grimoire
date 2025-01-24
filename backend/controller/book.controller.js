@@ -51,6 +51,7 @@ exports.create = async (req, res, next) => {
       const { title, author, year, genre } = fields;
       const {image} = files;
 
+    
       if (!title || !author || !year || !genre || !image) {
         return res.status(400).json({ message: "Tous les champs sont requis" });
       }
@@ -58,7 +59,7 @@ exports.create = async (req, res, next) => {
       const imageName = title + "-" + Date.now() + ".webp";
 
         // Process the image using sharp
-      await sharp(IMG_URL + image.newFilename)
+      await sharp(IMG_URL + image[0].newFilename)
         .resize(500)
         .toFormat("webp")
         .jpeg({ quality: 80 })
