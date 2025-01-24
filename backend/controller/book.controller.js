@@ -4,9 +4,11 @@ const sharp = require("sharp");
 const formidable = require("formidable");
 const Book = require("../model/book.model");
 
-const IMG_URL = "../frontend/public/images/";
+const PUBLIC_URL = "../frontend/public";
+const IMG_URL = "/images/";
+const BACK_IMG_URL = PUBLIC_URL+IMG_URL;
 const form = new formidable.IncomingForm({
-  uploadDir: IMG_URL, // Répertoire où les fichiers seront sauvegardés
+  uploadDir: BACK_IMG_URL, // Répertoire où les fichiers seront sauvegardés
   keepExtensions: true, // Conserver les extensions des fichiers
   multiples: false, // Empêche les champs et fichiers d'être traités comme des tableaux
 });
@@ -48,33 +50,31 @@ exports.rank = async (req, res) => {
 exports.create = async (req, res, next) => {
   form.parse(req, async (err, fields, files) => {
     if (err) {
-      console.error("Error parsing form:", err);
       return next(err);
     }
 
-    console.log("Fields received:", fields);
-    console.log("Files received:", files);
-
     try {
-      const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
-      const author = Array.isArray(fields.author) ? fields.author[0] : fields.author;
-      const year = Array.isArray(fields.year) ? fields.year[0] : fields.year;
-      const genre = Array.isArray(fields.genre) ? fields.genre[0] : fields.genre;
-
+      const book = JSON.parse(fields.book[0]);
+      const title = book.title;
+      const author =  book.author;
+      const year = book.year;
+      const genre = book.genre;
+     
       const image = Array.isArray(files.image) ? files.image[0] : files.image;
+    
 
       if (!title || !author || !year || !genre || !image || !image.filepath) {
         return res.status(400).json({ message: "Tous les champs (y compris l'image) sont requis." });
       }
 
       // Nom de l'image et chemin cible
-      const imageName = `${title.replace(/ /g, "_")}-${Date.now()}.webp`;
+      const imageName = `${IMG_URL}${title.replace(/ /g, "_")}-${Date.now()}.webp`;
 
       // Traitement de l'image avec Sharp
       await sharp(image.filepath) // Chemin source depuis formidable
         .resize(500)
         .toFormat("webp")
-        .toFile(path.join(IMG_URL, imageName)); // Chemin cible avec IMG_URL
+        .toFile(PUBLIC_URL+imageName); 
 
       // Création du livre
       const newBook = new Book({
@@ -135,7 +135,7 @@ exports.delete = async (req, res) => {
 
     await Book.findByIdAndDelete(bookId);
 
-    const imagePath = path.join(IMG_URL, book.imageUrl);
+    const imagePath = book.imageUrl;
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);
     }
