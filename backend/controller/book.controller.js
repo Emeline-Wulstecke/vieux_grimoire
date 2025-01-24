@@ -5,7 +5,11 @@ const formidable = require("formidable");
 const Book = require("../model/book.model");
 
 const IMG_URL = "../frontend/public/images/";
-const form = new formidable.IncomingForm({ uploadDir: IMG_URL, keepExtensions: true });
+const form = new formidable.IncomingForm({
+  uploadDir: IMG_URL, // Répertoire où les fichiers seront sauvegardés
+  keepExtensions: true, // Conserver les extensions des fichiers
+  multiples: false, // Empêche les champs et fichiers d'être traités comme des tableaux
+});
 
 //Public routes
 // Fetch the list of all books
@@ -41,35 +45,43 @@ exports.rank = async (req, res) => {
 
 //Private routes
 // Create a new book entry
-
 exports.create = async (req, res, next) => {
   form.parse(req, async (err, fields, files) => {
+    if (err) {
+      console.error("Error parsing form:", err);
+      return next(err);
+    }
 
-    if (err) { next(err); return }
+    console.log("Fields received:", fields);
+    console.log("Files received:", files);
 
     try {
-      const { title, author, year, genre } = fields;
-      const {image} = files;
+      const title = Array.isArray(fields.title) ? fields.title[0] : fields.title;
+      const author = Array.isArray(fields.author) ? fields.author[0] : fields.author;
+      const year = Array.isArray(fields.year) ? fields.year[0] : fields.year;
+      const genre = Array.isArray(fields.genre) ? fields.genre[0] : fields.genre;
 
-    
-      if (!title || !author || !year || !genre || !image) {
-        return res.status(400).json({ message: "Tous les champs sont requis" });
+      const image = Array.isArray(files.image) ? files.image[0] : files.image;
+
+      if (!title || !author || !year || !genre || !image || !image.filepath) {
+        return res.status(400).json({ message: "Tous les champs (y compris l'image) sont requis." });
       }
 
-      const imageName = title + "-" + Date.now() + ".webp";
+      // Nom de l'image et chemin cible
+      const imageName = `${title.replace(/ /g, "_")}-${Date.now()}.webp`;
 
-        // Process the image using sharp
-      await sharp(IMG_URL + image[0].newFilename)
+      // Traitement de l'image avec Sharp
+      await sharp(image.filepath) // Chemin source depuis formidable
         .resize(500)
         .toFormat("webp")
-        .jpeg({ quality: 80 })
-        .toFile(IMG_URL + imageName);
+        .toFile(path.join(IMG_URL, imageName)); // Chemin cible avec IMG_URL
 
+      // Création du livre
       const newBook = new Book({
         userId: req.auth.userId,
         title,
         author,
-        year,
+        year: parseInt(year, 10),
         genre,
         imageUrl: imageName,
         ratings: [],
@@ -79,10 +91,13 @@ exports.create = async (req, res, next) => {
       await newBook.save();
       res.status(201).json(newBook);
     } catch (error) {
+      console.error("Error creating book:", error);
       res.status(500).json({ error: error.message });
     }
   });
 };
+
+
 // Update a book entry
 exports.update = async (req, res) => {
   try {

@@ -11,7 +11,7 @@ router.get("/", bookCtrl.list);
 router.get("/bestrating", bookCtrl.rank);
 router.get("/:id", bookCtrl.read);
 
-
+ 
 // Private routes
 router.post("/", auth, bookCtrl.create);
 router.put("/:id", auth, bookCtrl.update);
