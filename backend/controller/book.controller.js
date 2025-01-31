@@ -76,6 +76,11 @@ exports.create = async (req, res, next) => {
         .toFormat("webp")
         .toFile(PUBLIC_URL+imageName); 
 
+        // Supprimer l'image originale après traitement
+      if (fs.existsSync(image.filepath)) {
+        fs.unlinkSync(image.filepath); // Supprimer l'image originale
+      }
+
       // Création du livre
       const newBook = new Book({
         userId: req.auth.userId,
@@ -97,28 +102,77 @@ exports.create = async (req, res, next) => {
   });
 };
 
-
-// Update a book entry
 exports.update = async (req, res) => {
-  try {
-    const bookId = req.params.id;
-
-    const book = await Book.findById(bookId);
-    if (!book) return res.status(404).json({ message: "Livre introuvable" });
-
-    if (book.userId !== req.auth.userId) {
-      return res.status(403).json({ message: "Non autorisé à modifier ce livre" });
+form.parse(req, async (err, fields, files) => {
+    if (err) {
+      console.error("Erreur lors de l'analyse de la requête :", err);
+      return res.status(500).json({ message: "Erreur lors de l'analyse de la requête", error: err.message });
     }
 
-    const updatedBook = await Book.findByIdAndUpdate(bookId, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    try {
+      const bookId = req.params.id;
+   
 
-    res.status(200).json(updatedBook);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+      const book = await Book.findById(bookId);
+      if (!book) {
+        console.error("Livre introuvable");
+        return res.status(404).json({ message: "Livre introuvable" });
+      }
+
+      if (book.userId !== req.auth.userId) {
+        console.error("Non autorisé à modifier ce livre");
+        return res.status(403).json({ message: "Non autorisé à modifier ce livre" });
+      }
+
+      const parsedFields = JSON.parse(fields.book[0]);
+      const updatedBook = {
+        title: parsedFields.title || book.title,
+        author: parsedFields.author || book.author,
+        year: parsedFields.year || book.year,
+        genre: parsedFields.genre || book.genre,
+        imageUrl: book.imageUrl,
+      };
+
+      console.log("Fichiers reçus :", files);
+
+      if (files.image && files.image.filepath) {
+        console.log("Traitement de l'image...");
+        const imageName = `${IMG_URL}${updatedBook.title.replace(/ /g, "_")}-${Date.now()}.webp`;
+
+        await sharp(files.image.filepath)
+          .resize(500)
+          .toFormat("webp")
+          .toFile(PUBLIC_URL + imageName);
+
+        if (book.imageUrl && fs.existsSync(PUBLIC_URL + book.imageUrl)) {
+          console.log("Suppression de l'ancienne image :", PUBLIC_URL + book.imageUrl);
+          fs.unlinkSync(PUBLIC_URL + book.imageUrl);
+        }
+
+        updatedBook.imageUrl = imageName;
+        console.log("Nouvelle image ajoutée :", imageName);
+
+        fs.unlinkSync(files.image.filepath);
+      }
+
+      const savedBook = await Book.findByIdAndUpdate(bookId, updatedBook, {
+        new: true,
+        runValidators: true,
+      });
+
+      const bookToReturn = {
+        ...savedBook.toObject(),
+        id: savedBook._id,
+      };
+      delete bookToReturn._id;
+
+      console.log("Livre mis à jour :", bookToReturn);
+      res.status(200).json(bookToReturn);
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour :", error);
+      res.status(500).json({ message: "Erreur lors de la mise à jour du livre", error: error.message });
+    }
+  });
 };
 
 // Delete a book entry
