@@ -16,6 +16,6 @@ router.get("/:id", bookCtrl.read);
 router.post("/", auth, bookCtrl.create);
 router.put("/:id", auth, bookCtrl.update);
 router.delete("/:id", auth, bookCtrl.delete);
-router.post("/:id/rate", auth, bookCtrl.rate);
+router.post("/:id/rating", auth, bookCtrl.rate);
 
 module.exports = router;

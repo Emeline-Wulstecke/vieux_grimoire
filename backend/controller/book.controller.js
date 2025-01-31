@@ -128,12 +128,8 @@ form.parse(req, async (err, fields, files) => {
         genre: parsedFields.genre || book.genre,
         imageUrl: book.imageUrl,
       };
-      
-      const image = files.image[0].filepath;
 
-      console.log("Fichiers reçus :", files);
-      console.log("image reçue :", files.image[0]);
-      console.log("chemin reçu :", files.image[0].filepath);
+      const image = files.image[0].filepath;
 
       if (image) {
         const imageName = `${IMG_URL}${updatedBook.title.replace(/ /g, "_")}-${Date.now()}.webp`;
@@ -144,13 +140,10 @@ form.parse(req, async (err, fields, files) => {
           .toFile(PUBLIC_URL + imageName);
 
         if (book.imageUrl && fs.existsSync(PUBLIC_URL + book.imageUrl)) {
-          console.log("Suppression de l'ancienne image :", PUBLIC_URL + book.imageUrl);
           fs.unlinkSync(PUBLIC_URL + book.imageUrl);
         }
 
         updatedBook.imageUrl = imageName;
-        console.log("Nouvelle image ajoutée :", imageName);
-
         fs.unlinkSync(image);
       }
 
@@ -165,7 +158,6 @@ form.parse(req, async (err, fields, files) => {
       };
       delete bookToReturn._id;
 
-      console.log("Livre mis à jour :", bookToReturn);
       res.status(200).json(bookToReturn);
     } catch (error) {
       console.error("Erreur lors de la mise à jour :", error);
@@ -203,21 +195,17 @@ exports.delete = async (req, res) => {
 exports.rate = async (req, res) => {
   try {
     const bookId = req.params.id;
-    const { grade } = req.body;
-
-    if (grade < 1 || grade > 5) {
-      return res.status(400).json({ message: "La note doit être comprise entre 1 et 5" });
-    }
+    const { rating } = req.body;
 
     const book = await Book.findById(bookId);
     if (!book) return res.status(404).json({ message: "Livre introuvable" });
 
-    const existingRating = book.ratings.find((r) => r.userId === req.auth.userId);
+    const existingRating = book.ratings.find((rating) => rating.userId === req.auth.userId);
     if (existingRating) {
       return res.status(400).json({ message: "Vous avez déjà noté ce livre" });
     }
 
-    book.ratings.push({ userId: req.auth.userId, grade });
+    book.ratings.push({ userId: req.auth.userId, grade:rating });
 
     const totalRating = book.ratings.reduce((sum, r) => sum + r.grade, 0);
     book.averageRating = totalRating / book.ratings.length;
