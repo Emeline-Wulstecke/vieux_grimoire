@@ -59,11 +59,9 @@ exports.create = async (req, res, next) => {
       const author =  book.author;
       const year = book.year;
       const genre = book.genre;
-     
-      const image = Array.isArray(files.image) ? files.image[0] : files.image;
-    
+      const image = files.image[0].filepath;
 
-      if (!title || !author || !year || !genre || !image || !image.filepath) {
+      if (!title || !author || !year || !genre || !image) {
         return res.status(400).json({ message: "Tous les champs (y compris l'image) sont requis." });
       }
 
@@ -71,16 +69,14 @@ exports.create = async (req, res, next) => {
       const imageName = `${IMG_URL}${title.replace(/ /g, "_")}-${Date.now()}.webp`;
 
       // Traitement de l'image avec Sharp
-      await sharp(image.filepath) // Chemin source depuis formidable
+      await sharp(image)
         .resize(500)
         .toFormat("webp")
         .toFile(PUBLIC_URL+imageName); 
 
         // Supprimer l'image originale après traitement
-      if (fs.existsSync(image.filepath)) {
-        fs.unlinkSync(image.filepath); // Supprimer l'image originale
-      }
-
+      if (fs.existsSync(image)) fs.unlinkSync(image);
+       
       // Création du livre
       const newBook = new Book({
         userId: req.auth.userId,
@@ -132,14 +128,17 @@ form.parse(req, async (err, fields, files) => {
         genre: parsedFields.genre || book.genre,
         imageUrl: book.imageUrl,
       };
+      
+      const image = files.image[0].filepath;
 
       console.log("Fichiers reçus :", files);
+      console.log("image reçue :", files.image[0]);
+      console.log("chemin reçu :", files.image[0].filepath);
 
-      if (files.image && files.image.filepath) {
-        console.log("Traitement de l'image...");
+      if (image) {
         const imageName = `${IMG_URL}${updatedBook.title.replace(/ /g, "_")}-${Date.now()}.webp`;
 
-        await sharp(files.image.filepath)
+        await sharp(image)
           .resize(500)
           .toFormat("webp")
           .toFile(PUBLIC_URL + imageName);
@@ -152,7 +151,7 @@ form.parse(req, async (err, fields, files) => {
         updatedBook.imageUrl = imageName;
         console.log("Nouvelle image ajoutée :", imageName);
 
-        fs.unlinkSync(files.image.filepath);
+        fs.unlinkSync(image);
       }
 
       const savedBook = await Book.findByIdAndUpdate(bookId, updatedBook, {
