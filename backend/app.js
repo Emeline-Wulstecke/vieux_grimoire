@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 require('dotenv').config(); 
 
+// Module pour interagir avec MongoDB
 const mongoose = require("mongoose");
 
 // Connexion à la base de données MongoDB
@@ -14,14 +15,15 @@ mongoose
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch(err => console.error('Connexion à MongoDB échouée :', err));
 
-// Middleware CORS
+// Middleware CORS : permet d'accepter les requêtes provenant d'autres domaines
 app.use(cors());
 
-// Middleware JSON
+// Middleware pour parser le JSON dans les requêtes entrantes
 app.use(express.json());
 
-// Routes 
+// Définition des routes de l'API
 app.use("/api/auth", require("./route/user.route"));
 app.use("/api/books", require("./route/book.route"));
 
+// Exportation de l'application pour l'utiliser dans d'autres fichiers
 module.exports = app;

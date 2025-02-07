@@ -3,13 +3,16 @@
 const express = require("express");
 const router = express.Router();
 
+// Importation du middleware d'authentification
 const auth = require("../middleware/auth.middleware");
+
+// Importation du contrôleur pour la gestion des livres
 const bookCtrl = require("../controller/book.controller");
 
 // Public routes
 router.get("/", bookCtrl.list);
 router.get("/bestrating", bookCtrl.rank);
-router.get("/:id", bookCtrl.read);
+router.get("/:id", bookCtrl.read); // Récupérer les détails d'un livre spécifique
 
  
 // Private routes

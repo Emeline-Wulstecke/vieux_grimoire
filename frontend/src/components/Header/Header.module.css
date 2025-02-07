@@ -33,6 +33,12 @@
     font-weight: bold;
 }
 
+.logout {
+    cursor: pointer;
+    text-decoration: none;
+    color: black;
+}
+
 @media all and (max-width: 600px) {
     .Header div {
         flex-direction: column;

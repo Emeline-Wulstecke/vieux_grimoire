@@ -1,7 +1,8 @@
-const bcrypt = require("bcrypt");
-const User = require("../model/user.model");
-const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");  // Module pour le hachage des mots de passe
+const User = require("../model/user.model"); // Importation du modèle utilisateur
+const jwt = require("jsonwebtoken"); // Module pour la gestion des tokens JWT
 
+// Contrôleur pour l'inscription d'un utilisateur
 exports.signup = (req, res, next) => {
   User.findOne({ email: req.body.email }) // Vérifie si l'email existe déjà
     .then((existingUser) => {
@@ -9,6 +10,7 @@ exports.signup = (req, res, next) => {
         return res.status(400).json({ error: "Email déjà utilisé !" });
       }
 
+  // Hachage du mot de passe avec bcrypt (10 rounds de salage)
       bcrypt
         .hash(req.body.password, 10)
         .then((hash) => {
@@ -17,6 +19,7 @@ exports.signup = (req, res, next) => {
             password: hash,
           });
 
+  // Sauvegarde de l'utilisateur en base de données
           user
             .save()
             .then(() => res.status(201).json({ message: "Utilisateur créé !" }))
@@ -43,8 +46,8 @@ exports.login = (req, res, next) => {
 
           // Générer un vrai token JWT
           const token = jwt.sign(
-            { userId: user._id }, // Payload : données à inclure dans le token
-            process.env.JWT_SECRET, // Clé secrète
+            { userId: user._id }, // Payload : données encodées dans le token
+            process.env.JWT_SECRET, // Clé secrète pour signer le token
             { expiresIn: "24h" } // Durée de validité
           );
 
