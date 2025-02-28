@@ -11,7 +11,7 @@ module.exports = (req, res, next) => {
 
    // Extraire le token de l'en-tête Authorization 
     const token = req.headers.authorization.split(" ")[1];
-    console.log("Token:", token);
+
 
     // Vérifier si un token a bien été extrait
     if (!token) {
@@ -24,7 +24,6 @@ module.exports = (req, res, next) => {
 
     // Attacher l'ID utilisateur extrait à la requête
     req.auth = { userId: decodedToken.userId };
-    console.log("Authenticated User ID:", req.auth.userId);
     
      // Passer au middleware suivant
     next();

@@ -38,7 +38,7 @@ exports.read = async (req, res) => {
 // Get books by average rating
 exports.rank = async (req, res) => {
   try {
-    const books = await Book.find().sort({ averageRating: -1 }).limit(5);
+    const books = await Book.find().sort({ averageRating: -1 }).limit(3);
     res.status(200).json(books);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -180,7 +180,7 @@ exports.delete = async (req, res) => {
 
     await Book.findByIdAndDelete(bookId);
 
-    const imagePath = book.imageUrl;
+    const imagePath = path.join(PUBLIC_URL, book.imageUrl);
     if (fs.existsSync(imagePath)) {
       fs.unlinkSync(imagePath);
     }
